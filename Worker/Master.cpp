@@ -26,7 +26,8 @@ void commandThread() {
     while (t)
     {
         getline(cin, command);
-        cout << "Command: " << command << endl;
+        if (command != "")
+            cout << "Command: " << command << endl;
         try
         {
             if (command == "stop") {
