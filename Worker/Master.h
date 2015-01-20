@@ -29,7 +29,7 @@ public:
     void Stop();
     Checker* getChecker();
     void doCommand(std::string command);
-
+    bool pause;
     bool _t;
 
 private:

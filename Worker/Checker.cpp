@@ -1,20 +1,23 @@
 #include "Checker.h"
+#include "Master.h"
 
 void Checker::checkIpList() {
+    _inProcess = true;
     string result = System::excuteCommand(string(this->command));
-    //BOOST_LOG_TRIVIAL(info) << "Show LIST: \n";
     vector<string> ip_addresses = System::splitString(result, "\n"); // Get rows
     vector<string> packet_load;
-    for (auto ip = begin(ip_addresses); ip != end(ip_addresses); ++ip)
-    {
-        boost::algorithm::trim(*ip);
-        packet_load = System::splitString(*ip, " ");
+    if (!ip_addresses.empty())
+        for (auto ip = begin(ip_addresses); ip != end(ip_addresses); ++ip)
+        {
+            boost::algorithm::trim(*ip);
+            packet_load = System::splitString(*ip, " ");
+            if (IsIp(packet_load[1]))
+                // Right IP, then ban or do nothing
+                if (atoi(packet_load[0].c_str()) > this->_maxPacketCount)
+                    BanIp(packet_load[1], 0);
+        }
 
-        if (IsIp(packet_load[1]))
-            // Right IP, then ban or do nothing
-            if (atoi(packet_load[0].c_str()) > this->_maxPacketCount)
-                BanIp(packet_load[1], 0);
-    }
+    _inProcess = false;
 }
 
 bool Checker::BanIp(string ip, int8_t type) {
@@ -42,8 +45,9 @@ bool Checker::BanIp(string ip, int8_t type) {
 bool Checker::UnbanIp(string ip, int8_t type) {
     map<string, Ip>::iterator it = ip_list.find(ip);
     if (it != ip_list.end()) {
-        System::excuteCommand("ipset -D ipban " +ip);
-        cout << "IP: " << ip << " unbanned!";
+        ip_list.erase(it);
+        if (type == 1)
+            cout << "IP: " << ip << " unbanned!";
     }
     else {
         cout << "IP: " << ip << " not yet banned";
@@ -60,4 +64,19 @@ bool Checker::IsIp(string ip) {
 //        cerr << "Not valide ip: " << ip << " Code: " << ec.message() << endl;
 
     return true;
+}
+
+void Checker::flushList() {
+    cout << "";
+    if (ip_list.empty())
+        return;
+
+    cout << ip_list.size() << " rows be clean!";
+    cout << endl;
+
+    for (auto ip : ip_list)
+    {
+        if (ip.second.isBanned)
+            UnbanIp(ip.first, 0);
+    }
 }

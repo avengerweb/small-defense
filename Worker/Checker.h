@@ -19,15 +19,18 @@ class Checker {
 
 public:
     void checkIpList();
+    void flushList();
     bool IsIp(string ip);
     bool BanIp(string ip, int8_t type);
     bool UnbanIp(string ip, int8_t type);
+    bool _inProcess;
 
 private:
     const char* command = "netstat -ntu | awk '{print $5}' | cut -d: -f1 | sort | uniq -c | sort -n";
     map<string, Ip> ip_list;
     int _banTime = 10; // minutes
-    int _maxPacketCount = 1; // max packet count for not give a ban
+    int _maxPacketCount = 0; // max packet count for not give a ban
+
 };
 
 #endif

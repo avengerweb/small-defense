@@ -4,11 +4,14 @@ using namespace std;
 
 void daemonThread() {
     Master* m = Master::instance();
+    m->pause = false;
     while (m->IsWork())
     {
         try
         {
-            m->getChecker()->checkIpList();
+            if (!m->pause)
+                m->getChecker()->checkIpList();
+
             // Update diff(We need that when have to small count of ip address not need to spam command)
             boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
         }
@@ -120,6 +123,24 @@ void Master::doCommand(std::string command) {
             cout << "not valid ip given";
             cout << endl;
         }
+    }
+
+    if (command_args[0] == "flush")
+    {
+
+            if (m->getChecker()->_inProcess) {
+                cout << "wait while main thread done his work 5-10 seconds!";
+                cout << endl;
+                while (m->getChecker()->_inProcess) {
+                    if (!m->getChecker()->_inProcess)
+                        break;
+                }
+            }
+            m->pause = true;
+            m->getChecker()->flushList(); // do ban IP
+            m->pause = false;
+
+
     }
 
     if (command == "stop") {
