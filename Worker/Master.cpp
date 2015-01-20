@@ -22,21 +22,19 @@ void daemonThread() {
 
 void commandThread() {
     string command;
-    bool t = true;
-    while (t)
+    Master* m = Master::instance();
+    m->_t = true;
+    while (m->_t)
     {
         getline(cin, command);
         if (command != "")
             cout << "Command: " << command << endl;
         try
         {
-            if (command == "stop") {
-                // Stop daemon thread
-                Master::instance()->Stop();
+            if (command == "")
+                continue;
 
-                // Stop command thread
-                t = false;
-            }
+            m->doCommand(command);
         }
         catch(boost::thread_interrupted&)
         {
@@ -85,4 +83,47 @@ Master* Master::instance() {
         }
     }
     return tmp;
+}
+
+void Master::doCommand(std::string command) {
+    Master* m = Master::instance();
+    std::vector<std::string> parsed_line = System::splitString(command, " ");
+    std::vector<std::string> command_args;
+    for (auto it : parsed_line) {
+        if (it != " " && it != "")
+        {
+            command_args.push_back(it);
+        }
+    }
+
+    if (command_args[0] == "ban")
+    {
+        if (m->getChecker()->IsIp(command_args[1]))
+        {
+            m->getChecker()->BanIp(command_args[1], 1); // do ban IP
+        }
+        else
+        {
+            cout << "not valid ip given";
+            cout << endl;
+        }
+    }
+
+    if (command_args[0] == "unban")
+    {
+        if (m->getChecker()->IsIp(command_args[1]))
+        {
+            m->getChecker()->UnbanIp(command_args[1], 1); // do ban IP
+        }
+        else
+        {
+            cout << "not valid ip given";
+            cout << endl;
+        }
+    }
+
+    if (command == "stop") {
+        m->Stop();
+        this->_t = false;
+    }
 }

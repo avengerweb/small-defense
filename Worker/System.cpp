@@ -17,3 +17,10 @@ string System::excuteCommand(string cmd) {
 
     return data;
 }
+
+vector<string> System::splitString(string std, string delimiter) {
+    std::vector<std::string> strs;
+    boost::split(strs, std, boost::is_any_of(delimiter));
+
+    return strs;
+}

@@ -2,8 +2,62 @@
 
 void Checker::checkIpList() {
     string result = System::excuteCommand(string(this->command));
-    BOOST_LOG_TRIVIAL(info) << result;
+    //BOOST_LOG_TRIVIAL(info) << "Show LIST: \n";
+    vector<string> ip_addresses = System::splitString(result, "\n"); // Get rows
+    vector<string> packet_load;
+    for (auto ip = begin(ip_addresses); ip != end(ip_addresses); ++ip)
+    {
+        boost::algorithm::trim(*ip);
+        packet_load = System::splitString(*ip, " ");
 
-    // Not show...
-    cout << endl;
+        if (IsIp(packet_load[1]))
+            // Right IP, then ban or do nothing
+            if (atoi(packet_load[0].c_str()) > this->_maxPacketCount)
+                BanIp(packet_load[1], 0);
+    }
+}
+
+bool Checker::BanIp(string ip, int8_t type) {
+    map<string, Ip>::iterator it = ip_list.find(ip);
+    if (it == ip_list.end() || (!it->second.isBanned && !it->second.isInWaitList)) {
+        ip_list[ip].isBanned = true;
+        ip_list[ip].banTime = time(0);
+        ip_list[ip].unbanTime = time(0) + this->_banTime * 60;
+        ip_list[ip].type = type;
+
+        cout << ip_list[ip].banTime << " " << ip_list[ip].unbanTime << " " << endl;
+        System::excuteCommand("ipset -A ipban " +ip);
+        cout << "BAN IP: " << ip;
+        cout << endl;
+        return true;
+    }
+
+    if (type == 1) {
+        cout << "IP: " << ip << " already banned";
+        cout << endl;
+    }
+    return false;
+}
+
+bool Checker::UnbanIp(string ip, int8_t type) {
+    map<string, Ip>::iterator it = ip_list.find(ip);
+    if (it != ip_list.end()) {
+        System::excuteCommand("ipset -D ipban " +ip);
+        cout << "IP: " << ip << " unbanned!";
+    }
+    else {
+        cout << "IP: " << ip << " not yet banned";
+        cout << endl;
+        return false;
+    }
+}
+
+bool Checker::IsIp(string ip) {
+    boost::system::error_code ec;
+    boost::asio::ip::address::from_string( ip, ec );
+    if ( ec )
+        return  false;
+//        cerr << "Not valide ip: " << ip << " Code: " << ec.message() << endl;
+
+    return true;
 }

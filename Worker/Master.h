@@ -14,6 +14,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <memory>
+#include <vector>
 #include "Checker.h"
 
 
@@ -27,6 +28,9 @@ public:
     void start();
     void Stop();
     Checker* getChecker();
+    void doCommand(std::string command);
+
+    bool _t;
 
 private:
     static boost::atomic<Master *> instance_;
