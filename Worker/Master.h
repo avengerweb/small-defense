@@ -13,6 +13,7 @@
 #include <boost/bind.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/chrono/chrono.hpp>
 #include <memory>
 #include <vector>
 #include "Checker.h"
@@ -29,8 +30,9 @@ public:
     void Stop();
     Checker* getChecker();
     void doCommand(std::string command);
-    bool pause;
-    bool _t;
+    boost::chrono::high_resolution_clock::time_point m_lastCheck;
+    bool m_checkerLoop;
+    bool m_commandLoop;
 
 private:
     static boost::atomic<Master *> instance_;

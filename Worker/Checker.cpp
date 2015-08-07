@@ -45,9 +45,13 @@ bool Checker::BanIp(string ip, int8_t type) {
 bool Checker::UnbanIp(string ip, int8_t type) {
     map<string, Ip>::iterator it = ip_list.find(ip);
     if (it != ip_list.end()) {
-        ip_list.erase(it);
+        it->second.isInWaitList = true;
+        System::excuteCommand("ipset -D ipban " + ip);
+
         if (type == 1)
             cout << "IP: " << ip << " unbanned!";
+
+        return true;
     }
     else {
         cout << "IP: " << ip << " not yet banned";
@@ -59,11 +63,10 @@ bool Checker::UnbanIp(string ip, int8_t type) {
 bool Checker::IsIp(string ip) {
     boost::system::error_code ec;
     boost::asio::ip::address::from_string( ip, ec );
-    if ( ec )
-        return  false;
-//        cerr << "Not valide ip: " << ip << " Code: " << ec.message() << endl;
+//    if ( ec )
+//        cerr << "Not valid ip: " << ip << " Code: " << ec.message() << endl;
 
-    return true;
+    return !ec;
 }
 
 void Checker::flushList() {
@@ -74,9 +77,12 @@ void Checker::flushList() {
     cout << ip_list.size() << " rows be clean!";
     cout << endl;
 
-    for (auto ip : ip_list)
-    {
-        if (ip.second.isBanned)
-            UnbanIp(ip.first, 0);
-    }
+    ip_list.clear();
+    System::excuteCommand("ipset -F ipban");
+
+//    for (auto ip : ip_list)
+//    {
+//        if (ip.second.isBanned)
+//            UnbanIp(ip.first, 0);
+//    }
 }

@@ -1,19 +1,26 @@
 #include "Master.h"
+#include <boost/chrono.hpp>
 
 using namespace std;
 
 void daemonThread() {
-    Master* m = Master::instance();
-    m->pause = false;
-    while (m->IsWork())
+    Master* master = Master::instance();
+    master->m_checkerLoop = false;
+    master->m_lastCheck = boost::chrono::high_resolution_clock::now();
+    while (master->IsWork())
     {
         try
         {
-            if (!m->pause)
-                m->getChecker()->checkIpList();
+            if (!master->m_checkerLoop) {
+                boost::chrono::high_resolution_clock::time_point time_p = boost::chrono::high_resolution_clock::now();
+                boost::chrono::milliseconds duration = boost::chrono::duration_cast<boost::chrono::milliseconds> (time_p - master->m_lastCheck);
 
-            // Update diff(We need that when have to small count of ip address not need to spam command)
-            boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
+                if (duration.count() > 2000) {
+                    master->m_lastCheck = time_p;
+                    master->getChecker()->checkIpList();
+                }
+            }
+
         }
         catch(boost::thread_interrupted&)
         {
@@ -25,9 +32,9 @@ void daemonThread() {
 
 void commandThread() {
     string command;
-    Master* m = Master::instance();
-    m->_t = true;
-    while (m->_t)
+    Master* master = Master::instance();
+    master->m_commandLoop = true;
+    while (master->m_commandLoop)
     {
         getline(cin, command);
         if (command != "")
@@ -37,7 +44,7 @@ void commandThread() {
             if (command == "")
                 continue;
 
-            m->doCommand(command);
+            master->doCommand(command);
         }
         catch(boost::thread_interrupted&)
         {
@@ -136,15 +143,15 @@ void Master::doCommand(std::string command) {
                         break;
                 }
             }
-            m->pause = true;
+            m->m_checkerLoop = true;
             m->getChecker()->flushList(); // do ban IP
-            m->pause = false;
+            m->m_checkerLoop = false;
 
 
     }
 
     if (command == "stop") {
         m->Stop();
-        this->_t = false;
+        this->m_commandLoop = false;
     }
 }
