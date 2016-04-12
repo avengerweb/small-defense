@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.4)
+cmake_minimum_required(VERSION 3.0.0)
 project(DProtect)
 set(Boost_USE_MULTITHREADED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -lboost_system -lboost_thread -lboost_filesystem -lboost_log -DBOOST_LOG_DYN_LINK")
